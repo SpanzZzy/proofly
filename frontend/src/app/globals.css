@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #FFFFFF;
+  --surface: #F8F8FA;
+  --surface-elevated: #FFFFFF;
+  --text-primary: #111111;
+  --text-secondary: #666666;
+  --border: #E5E7EB;
+  --muted-bg: #F3F4F6;
+  --primary-btn: #111111;
+  --primary-btn-text: #FFFFFF;
+  --ring: rgba(17, 17, 17, 0.1);
+  color-scheme: light;
+}
+
+.dark {
+  --background: #101115;
+  --surface: #191B21;
+  --surface-elevated: #22242C;
+  --text-primary: #F5F5F7;
+  --text-secondary: #A9ACB8;
+  --border: #353742;
+  --muted-bg: #272932;
+  --primary-btn: #F5F5F7;
+  --primary-btn-text: #111115;
+  --ring: rgba(245, 245, 247, 0.15);
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Custom Stellar-inspired animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in-overlay {
+  animation: fadeInOverlay 0.4s ease-out forwards;
+}
+
+@keyframes fadeInDialog {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up-overlay {
+  animation: fadeInDialog 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Ambient glow & backdrop animations */
+@keyframes pulseSubtle {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 8s ease-in-out infinite;
+}
+
+/* Staggered delay helper classes */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+.delay-600 { animation-delay: 0.6s; }
+.delay-700 { animation-delay: 0.7s; }
+.delay-800 { animation-delay: 0.8s; }
+
+/* Reduced motion accessibility support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-fade-in-up,
+  .animate-fade-in-overlay,
+  .animate-slide-up-overlay,
+  .animate-pulse-subtle {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}
+
+/* Print styles for export report */
+@media print {
+  header, footer, nav, .no-print, button {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .print-area {
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .print-area * {
+    color: #000000 !important;
+    border-color: #d1d5db !important;
+    background-color: transparent !important;
+  }
+}
