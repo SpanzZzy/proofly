@@ -253,7 +253,7 @@ async def analyze_url(req: UrlAnalysisRequest) -> AnalysisResponse:
             ai_result = await ollama_client.generate_json(prompt)
 
             if ai_result:
-                model_used = "gemma4:e2b"
+                model_used = ollama_client.model
                 if ai_result.get("claim"):
                     claim = ai_result["claim"]
                 if ai_result.get("reasoning"):

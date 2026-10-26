@@ -33,3 +33,13 @@ When inspecting suspicious links, websites, or shortened URLs:
 ## 4. Open-Source Verification
 
 Every line of code responsible for handling, parsing, and scoring submitted evidence is open source under the MIT License and inspectable in the `backend/` and `frontend/` directories.
+
+---
+
+## 5. Temporary Cloudflare Quick Tunnel / Hosted Showcase Privacy Notice
+
+During the hackathon public showcase, online AI inference requests submitted through the hosted platform are processed directly by the developer's local hardware (Apple Silicon Mac running Gemma 4 on Ollama) via an encrypted, authenticated Cloudflare Quick Tunnel:
+- **No Third-Party AI Services**: Requests do not pass through commercial cloud AI APIs.
+- **Zero Evidence Logging**: The local AI gateway explicitly suppresses body payload logging. User messages, screenshots, and call transcripts are processed purely in volatile RAM and immediately discarded.
+- **Hardened Model Access**: The tunnel terminates at an authenticated local proxy listening exclusively on `127.0.0.1:8765` with timing-safe bearer token validation. All Ollama administrative endpoints (e.g. model downloads, deletions) are hard-blocked.
+

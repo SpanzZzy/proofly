@@ -12,9 +12,10 @@ if AI_PROVIDER not in ("ollama", "rules"):
     AI_PROVIDER = "rules"
 
 # Ollama configuration
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip("/")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma4:e2b")
-OLLAMA_TIMEOUT = float(os.getenv("OLLAMA_TIMEOUT", "45.0"))
+OLLAMA_GATEWAY_TOKEN = os.getenv("OLLAMA_GATEWAY_TOKEN", "").strip()
+OLLAMA_TIMEOUT = float(os.getenv("OLLAMA_TIMEOUT", "60.0"))
 
 
 # Allowed CORS origins (reads from environment with fallback defaults)

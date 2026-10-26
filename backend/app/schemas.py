@@ -71,6 +71,7 @@ class HealthResponse(BaseModel):
     ollama_connected: bool
     ollama_model: str
     active_model_found: bool
+    gateway_authenticated: Optional[bool] = None
 
 
 

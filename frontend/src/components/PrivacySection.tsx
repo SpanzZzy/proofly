@@ -64,6 +64,15 @@ export default function PrivacySection() {
           );
         })}
       </div>
+
+      {/* Temporary Showcase Tunnel Notice */}
+      <div className="mt-8 p-5 rounded-2xl bg-zinc-50 dark:bg-[#191B21] border border-zinc-200 dark:border-[#353742] text-left flex items-start space-x-3 text-xs text-zinc-600 dark:text-[#A9ACB8]">
+        <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1 shrink-0" />
+        <div>
+          <span className="font-semibold text-black dark:text-[#F5F5F7]">Live Showcase Privacy Notice: </span>
+          Online AI analysis requests are forwarded securely from the Render backend to the developer&apos;s Mac running Gemma 4 via an encrypted, authenticated Cloudflare Quick Tunnel. No user evidence, prompts, or images are written to persistent logs or stored on external servers.
+        </div>
+      </div>
     </section>
   );
 }

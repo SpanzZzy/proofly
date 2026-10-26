@@ -11,7 +11,8 @@ from app.config import (
     OLLAMA_MODEL,
     MAX_IMAGE_SIZE_BYTES,
     ALLOWED_IMAGE_TYPES,
-    AI_PROVIDER
+    AI_PROVIDER,
+    OLLAMA_GATEWAY_TOKEN
 )
 from app.schemas import (
     HealthResponse,
@@ -57,7 +58,8 @@ app.add_middleware(
 
 @app.get("/api/health", response_model=HealthResponse)
 async def get_health():
-    """System health check and Ollama connection status."""
+    """System health check, AI provider status, and gateway connection status."""
+    has_gateway_token = bool(OLLAMA_GATEWAY_TOKEN)
     if AI_PROVIDER == "rules":
         return HealthResponse(
             status="ok",
@@ -66,11 +68,16 @@ async def get_health():
             ai_provider="rules",
             ollama_connected=False,
             ollama_model=OLLAMA_MODEL,
-            active_model_found=False
+            active_model_found=False,
+            gateway_authenticated=has_gateway_token
         )
 
     connected, models = await ollama_client.check_health()
-    active_model_found = OLLAMA_MODEL in models
+    active_model_found = (
+        OLLAMA_MODEL in models
+        or any(m.startswith("gemma4") for m in models)
+        or any(OLLAMA_MODEL.startswith(m.split(":")[0]) for m in models)
+    )
     return HealthResponse(
         status="ok",
         version="1.0.0",
@@ -78,7 +85,8 @@ async def get_health():
         ai_provider="ollama",
         ollama_connected=connected,
         ollama_model=OLLAMA_MODEL,
-        active_model_found=active_model_found
+        active_model_found=active_model_found,
+        gateway_authenticated=has_gateway_token
     )
 
 

@@ -6,27 +6,48 @@ import logging
 from typing import Optional, List, Dict, Any, Tuple
 import httpx
 
-from app.config import OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_TIMEOUT
+from app.config import OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_TIMEOUT, OLLAMA_GATEWAY_TOKEN
 from app.ai.prompts import SYSTEM_SECURITY_DIRECTIVE
 
 logger = logging.getLogger("proofly.ai")
 
 
 class OllamaClient:
-    def __init__(self, base_url: str = OLLAMA_BASE_URL, model: str = OLLAMA_MODEL):
+    def __init__(
+        self,
+        base_url: str = OLLAMA_BASE_URL,
+        model: str = OLLAMA_MODEL,
+        token: Optional[str] = OLLAMA_GATEWAY_TOKEN,
+        timeout: float = OLLAMA_TIMEOUT
+    ):
         self.base_url = base_url.rstrip("/")
         self.model = model
-        self.timeout = OLLAMA_TIMEOUT
+        self.token = token.strip() if token else ""
+        self.timeout = timeout
+
+    def _get_headers(self) -> Dict[str, str]:
+        """Build headers with optional Bearer token authorization (never logged)."""
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        return headers
 
     async def check_health(self) -> Tuple[bool, List[str]]:
-        """Check if local Ollama daemon is reachable and list models."""
+        """Check if local Ollama daemon or authenticated tunnel gateway is reachable."""
         try:
-            async with httpx.AsyncClient(timeout=3.0) as client:
-                res = await client.get(f"{self.base_url}/api/tags")
+            async with httpx.AsyncClient(timeout=6.0) as client:
+                res = await client.get(
+                    f"{self.base_url}/api/tags",
+                    headers=self._get_headers()
+                )
                 if res.status_code == 200:
                     data = res.json()
                     models = [m.get("name", "") for m in data.get("models", [])]
                     return True, models
+                elif res.status_code == 401:
+                    logger.warning("Gateway authentication rejected: invalid or missing OLLAMA_GATEWAY_TOKEN.")
+                else:
+                    logger.warning(f"Ollama tags endpoint returned HTTP {res.status_code}")
         except Exception as e:
             logger.warning(f"Ollama health check failed: {e}")
         return False, []
@@ -97,7 +118,11 @@ class OllamaClient:
 
         try:
             async with httpx.AsyncClient(timeout=req_timeout) as client:
-                res = await client.post(f"{self.base_url}/api/generate", json=payload)
+                res = await client.post(
+                    f"{self.base_url}/api/generate",
+                    json=payload,
+                    headers=self._get_headers()
+                )
                 if res.status_code == 200:
                     data = res.json()
                     response_text = data.get("response", "")
