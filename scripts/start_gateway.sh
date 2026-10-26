@@ -96,4 +96,12 @@ echo "================================================================="
 echo "🚀 Starting Gateway on http://127.0.0.1:8765 (Press CTRL+C to stop)..."
 echo ""
 
+# Clean up any lingering gateway process on port 8765
+OLD_PID=$(lsof -ti tcp:8765 2>/dev/null || true)
+if [ -n "$OLD_PID" ]; then
+    echo "• Refreshing previous gateway process (PID $OLD_PID)..."
+    kill -9 $OLD_PID 2>/dev/null || true
+    sleep 1
+fi
+
 PYTHONPATH=. python3 -m uvicorn gateway.gateway:app --host 127.0.0.1 --port 8765 --no-access-log
