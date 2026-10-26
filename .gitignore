@@ -1,0 +1,85 @@
+# ==========================================
+# Proofly Comprehensive Git Ignore Rules
+# ==========================================
+
+# 1. Python & Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+parts/
+var/
+sdist/
+wheels/
+
+# 2. Node.js & Next.js Builds
+node_modules/
+.next/
+.turbo/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# 3. Package Manager & Debug Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# 4. Environment Variables & Secrets
+.env
+.env.*
+*.key
+*.pem
+*.cert
+credentials.json
+secrets.json
+# Keep safe example templates tracked
+!.env.example
+!frontend/.env.example
+
+# 5. Operating System & Editor Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 6. Temporary Directories & Test Reports
+tmp/
+temp/
+uploads/
+test-results/
+playwright-report/
+
+# 7. Local AI & Model Weights (Ollama, PyTorch, etc.)
+*.gguf
+*.safetensors
+*.onnx
+*.pt
+*.pth
+*.bin
