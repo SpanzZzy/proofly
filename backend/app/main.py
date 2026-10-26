@@ -10,7 +10,8 @@ from app.config import (
     CORS_ORIGINS,
     OLLAMA_MODEL,
     MAX_IMAGE_SIZE_BYTES,
-    ALLOWED_IMAGE_TYPES
+    ALLOWED_IMAGE_TYPES,
+    AI_PROVIDER
 )
 from app.schemas import (
     HealthResponse,
@@ -22,6 +23,7 @@ from app.schemas import (
     PhoneAnalysisRequest,
 )
 from app.ai.ollama_client import ollama_client
+from app.detectors.predefined_demos import get_predefined_demo
 from app.detectors.message_analyzer import analyze_message
 from app.detectors.url_analyzer import analyze_url
 from app.detectors.email_analyzer import analyze_email
@@ -42,29 +44,55 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS configuration strictly bound to local development ports
+# CORS configuration reading allowed origins from environment and defaults
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 @app.get("/api/health", response_model=HealthResponse)
 async def get_health():
     """System health check and Ollama connection status."""
+    if AI_PROVIDER == "rules":
+        return HealthResponse(
+            status="ok",
+            version="1.0.0",
+            engine="Proofly Hybrid Security Engine",
+            ai_provider="rules",
+            ollama_connected=False,
+            ollama_model=OLLAMA_MODEL,
+            active_model_found=False
+        )
+
     connected, models = await ollama_client.check_health()
     active_model_found = OLLAMA_MODEL in models
     return HealthResponse(
         status="ok",
         version="1.0.0",
         engine="Proofly Hybrid Security Engine",
+        ai_provider="ollama",
         ollama_connected=connected,
         ollama_model=OLLAMA_MODEL,
         active_model_found=active_model_found
     )
+
+
+@app.get("/api/demo/{example_id}", response_model=AnalysisResponse)
+async def endpoint_get_demo(example_id: str):
+    """Returns realistic predefined showcase demo result for a verified example ID."""
+    demo = get_predefined_demo(example_id)
+    if not demo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Showcase example '{example_id}' not found."
+        )
+    return demo
+
 
 
 @app.get("/api/models", response_model=ModelsResponse)
@@ -155,26 +183,35 @@ async def endpoint_analyze_phone(req: PhoneAnalysisRequest):
 
 @app.post("/api/analyze/payment", response_model=AnalysisResponse)
 async def endpoint_analyze_payment(
-    image: UploadFile = File(...),
+    image: Optional[UploadFile] = File(None),
     claimed_amount: Optional[str] = Form(None),
     currency: Optional[str] = Form("INR"),
     notes: Optional[str] = Form(None)
 ):
     """Payment Proof Lab: Forensic verification of UPI screenshots, receipts, and bank transfer slips."""
     try:
-        content_type = image.content_type or ""
-        if content_type.lower() not in ALLOWED_IMAGE_TYPES:
+        has_file = image is not None and bool(image.filename)
+        if not has_file and not notes and not claimed_amount:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Unsupported image type '{content_type}'. Please upload PNG, JPEG, or WebP."
+                detail="Please upload a payment screenshot or provide transaction notes/details."
             )
 
-        image_bytes = await image.read()
-        if len(image_bytes) > MAX_IMAGE_SIZE_BYTES:
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail="Image file exceeds 10MB limit."
-            )
+        image_bytes = None
+        if has_file:
+            content_type = image.content_type or ""
+            if content_type.lower() not in ALLOWED_IMAGE_TYPES:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Unsupported image type '{content_type}'. Please upload PNG, JPEG, or WebP."
+                )
+
+            image_bytes = await image.read()
+            if len(image_bytes) > MAX_IMAGE_SIZE_BYTES:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail="Image file exceeds 10MB limit."
+                )
 
         return await analyze_payment(
             image_bytes=image_bytes,
@@ -194,24 +231,33 @@ async def endpoint_analyze_payment(
 
 @app.post("/api/analyze/image", response_model=AnalysisResponse)
 async def endpoint_analyze_image(
-    image: UploadFile = File(...),
+    image: Optional[UploadFile] = File(None),
     context_description: Optional[str] = Form(None)
 ):
     """Image Evidence Inspector: Visual forensics for scam advertisements, fake notices, and impersonation media."""
     try:
-        content_type = image.content_type or ""
-        if content_type.lower() not in ALLOWED_IMAGE_TYPES:
+        has_file = image is not None and bool(image.filename)
+        if not has_file and not context_description:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Unsupported image type '{content_type}'. Please upload PNG, JPEG, or WebP."
+                detail="Please upload an image file or provide a text description of the visual claim."
             )
 
-        image_bytes = await image.read()
-        if len(image_bytes) > MAX_IMAGE_SIZE_BYTES:
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail="Image file exceeds 10MB limit."
-            )
+        image_bytes = None
+        if has_file:
+            content_type = image.content_type or ""
+            if content_type.lower() not in ALLOWED_IMAGE_TYPES:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Unsupported image type '{content_type}'. Please upload PNG, JPEG, or WebP."
+                )
+
+            image_bytes = await image.read()
+            if len(image_bytes) > MAX_IMAGE_SIZE_BYTES:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail="Image file exceeds 10MB limit."
+                )
 
         return await analyze_image(
             image_bytes=image_bytes,

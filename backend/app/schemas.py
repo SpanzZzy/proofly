@@ -67,9 +67,11 @@ class HealthResponse(BaseModel):
     status: str = "ok"
     version: str = "1.0.0"
     engine: str = "Proofly Hybrid Security Engine"
+    ai_provider: str = "rules"
     ollama_connected: bool
     ollama_model: str
     active_model_found: bool
+
 
 
 class ModelsResponse(BaseModel):

@@ -5,10 +5,12 @@ import ipaddress
 from urllib.parse import urlparse, unquote
 from typing import List, Tuple, Dict, Any
 
+from app.config import AI_PROVIDER
 from app.schemas import AnalysisResponse, SignalItem, UrlAnalysisRequest
 from app.utils.helpers import get_iso_timestamp, calculate_risk_level
 from app.ai.ollama_client import ollama_client
 from app.ai.prompts import URL_EXPLANATION_PROMPT
+
 
 SHORTENER_DOMAINS = {
     "bit.ly", "tinyurl.com", "t.co", "is.gd", "cutt.ly", "rb.gy", "ow.ly",
@@ -243,29 +245,31 @@ async def analyze_url(req: UrlAnalysisRequest) -> AnalysisResponse:
     ai_analysis = None
     model_used = "deterministic-rule-engine"
 
-    # 2. Gemma 4 Explainer
-    try:
-        signals_text = "\n".join([f"- {s.name} ({s.severity}): {s.description}" for s in signals]) if signals else "None detected."
-        prompt = URL_EXPLANATION_PROMPT.format(url=raw_url, signals=signals_text)
-        ai_result = await ollama_client.generate_json(prompt)
+    # 2. Gemma 4 Explainer (if AI_PROVIDER is ollama)
+    if AI_PROVIDER == "ollama":
+        try:
+            signals_text = "\n".join([f"- {s.name} ({s.severity}): {s.description}" for s in signals]) if signals else "None detected."
+            prompt = URL_EXPLANATION_PROMPT.format(url=raw_url, signals=signals_text)
+            ai_result = await ollama_client.generate_json(prompt)
 
-        if ai_result:
-            model_used = "gemma4:e2b"
-            if ai_result.get("claim"):
-                claim = ai_result["claim"]
-            if ai_result.get("reasoning"):
-                ai_analysis = ai_result["reasoning"]
-                summary = ai_result["reasoning"]
-            if ai_result.get("actions") and isinstance(ai_result["actions"], list):
-                for act in ai_result["actions"]:
-                    if act not in actions:
-                        actions.insert(0, act)
-            if ai_result.get("observations") and isinstance(ai_result["observations"], list):
-                for obs in ai_result["observations"]:
-                    if obs not in observations:
-                        observations.append(obs)
-    except Exception:
-        pass
+            if ai_result:
+                model_used = "gemma4:e2b"
+                if ai_result.get("claim"):
+                    claim = ai_result["claim"]
+                if ai_result.get("reasoning"):
+                    ai_analysis = ai_result["reasoning"]
+                    summary = ai_result["reasoning"]
+                if ai_result.get("actions") and isinstance(ai_result["actions"], list):
+                    for act in ai_result["actions"]:
+                        if act not in actions:
+                            actions.insert(0, act)
+                if ai_result.get("observations") and isinstance(ai_result["observations"], list):
+                    for obs in ai_result["observations"]:
+                        if obs not in observations:
+                            observations.append(obs)
+        except Exception:
+            pass
+
 
     if len(signals) == 0:
         risk_score = 5

@@ -5,10 +5,13 @@ from typing import List, Tuple, Dict, Any, Optional
 import phonenumbers
 from phonenumbers import geocoder, carrier, PhoneNumberType
 
+from app.config import AI_PROVIDER
 from app.schemas import AnalysisResponse, SignalItem, PhoneAnalysisRequest
 from app.utils.helpers import get_iso_timestamp, calculate_risk_level
 from app.ai.ollama_client import ollama_client
 from app.ai.prompts import PHONE_CALL_PROMPT
+from app.detectors.rule_engine import run_comprehensive_rule_engine
+
 
 SCAM_CALL_TACTICS = [
     # 1. Digital Arrest / Law Enforcement Intimidation Scam
@@ -206,6 +209,22 @@ async def analyze_phone(req: PhoneAnalysisRequest) -> AnalysisResponse:
     # 2. Deterministic Rule Analysis
     risk_score, signals, observations, actions, unknowns = run_deterministic_phone_rules(meta, claimed_org, call_desc)
 
+    # Enhance transcript with comprehensive rule engine
+    if call_desc:
+        c_score, c_signals, c_obs, c_actions, c_unknowns, _, _ = run_comprehensive_rule_engine(
+            call_desc, channel="phone", is_transcript=True
+        )
+        for s in c_signals:
+            if not any(existing.name.lower() == s.name.lower() for existing in signals):
+                signals.append(s)
+        for obs in c_obs:
+            if obs not in observations:
+                observations.append(obs)
+        for act in c_actions:
+            if act not in actions:
+                actions.append(act)
+        risk_score = min(max(risk_score, c_score), 100)
+
     # Base Claim
     if claimed_org:
         claim = f"The caller claims to represent {claimed_org} and is contacting the recipient regarding official business."
@@ -218,8 +237,8 @@ async def analyze_phone(req: PhoneAnalysisRequest) -> AnalysisResponse:
     ai_analysis = None
     model_used = "deterministic-rule-engine"
 
-    # 3. Gemma 4 AI Analysis if call description is provided
-    if call_desc:
+    # 3. Gemma 4 AI Analysis if call description is provided and AI_PROVIDER is ollama
+    if call_desc and AI_PROVIDER == "ollama":
         try:
             prompt = PHONE_CALL_PROMPT.format(
                 phone_number=meta["international"],
@@ -253,6 +272,7 @@ async def analyze_phone(req: PhoneAnalysisRequest) -> AnalysisResponse:
                                 risk_score = min(risk_score + 15, 100)
         except Exception:
             pass
+
 
     if not call_desc:
         risk_score = 10 if meta["is_valid"] else 20

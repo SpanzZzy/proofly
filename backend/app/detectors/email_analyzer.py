@@ -6,10 +6,13 @@ from email import policy
 from email.parser import BytesParser, Parser
 from typing import List, Tuple, Dict, Any, Optional
 
+from app.config import AI_PROVIDER
 from app.schemas import AnalysisResponse, SignalItem, EmailAnalysisRequest
 from app.utils.helpers import get_iso_timestamp, calculate_risk_level, extract_urls_from_text, clean_html_to_text
 from app.ai.ollama_client import ollama_client
 from app.ai.prompts import EMAIL_ANALYSIS_PROMPT
+from app.detectors.rule_engine import run_comprehensive_rule_engine
+
 
 SUSPICIOUS_ATTACHMENT_EXTENSIONS = {
     ".exe", ".scr", ".bat", ".cmd", ".vbs", ".js", ".jse", ".wsf", ".ps1",
@@ -313,39 +316,57 @@ async def analyze_email(req: EmailAnalysisRequest, raw_eml_bytes: Optional[bytes
     # 2. Run Deterministic Forensics
     risk_score, signals, observations, actions, unknowns = run_deterministic_email_rules(parsed)
 
+    # Run comprehensive keyword/heuristic analysis on email body
+    body_text = parsed.get("body_text", "")
+    if body_text.strip():
+        b_score, b_signals, b_obs, b_actions, b_unknowns, _, _ = run_comprehensive_rule_engine(body_text, channel="email")
+        for s in b_signals:
+            if not any(existing.name.lower() == s.name.lower() for existing in signals):
+                signals.append(s)
+        for obs in b_obs:
+            if obs not in observations:
+                observations.append(obs)
+        for act in b_actions:
+            if act not in actions:
+                actions.append(act)
+        risk_score = min(max(risk_score, b_score), 100)
+
+
     claim = f"The email purports to be from {parsed.get('from') or 'the sender'} regarding '{parsed.get('subject') or 'unspecified subject'}'."
     summary = f"Detected {len(signals)} forensic warning sign(s) in this email."
     ai_analysis = None
     model_used = "deterministic-rule-engine"
 
     # 3. Gemma 4 AI Deep Semantic Analysis
-    try:
-        headers_summary = f"From: {parsed.get('from')}, SPF: {parsed.get('spf_status')}, DKIM: {parsed.get('dkim_status')}"
-        prompt = EMAIL_ANALYSIS_PROMPT.format(
-            sender=parsed.get("from", "Unspecified"),
-            subject=parsed.get("subject", "Unspecified"),
-            headers_summary=headers_summary,
-            text=parsed.get("body_text", "")[:2500]  # Cap for prompt efficiency
-        )
-        ai_result = await ollama_client.generate_json(prompt)
+    if AI_PROVIDER == "ollama":
+        try:
+            headers_summary = f"From: {parsed.get('from')}, SPF: {parsed.get('spf_status')}, DKIM: {parsed.get('dkim_status')}"
+            prompt = EMAIL_ANALYSIS_PROMPT.format(
+                sender=parsed.get("from", "Unspecified"),
+                subject=parsed.get("subject", "Unspecified"),
+                headers_summary=headers_summary,
+                text=parsed.get("body_text", "")[:2500]  # Cap for prompt efficiency
+            )
+            ai_result = await ollama_client.generate_json(prompt)
 
-        if ai_result:
-            model_used = "gemma4:e2b"
-            if ai_result.get("claim"):
-                claim = ai_result["claim"]
-            if ai_result.get("reasoning"):
-                ai_analysis = ai_result["reasoning"]
-                summary = ai_result["reasoning"]
-            if ai_result.get("observations") and isinstance(ai_result["observations"], list):
-                for obs in ai_result["observations"]:
-                    if obs not in observations:
-                        observations.append(obs)
-            if ai_result.get("actions") and isinstance(ai_result["actions"], list):
-                for act in ai_result["actions"]:
-                    if act not in actions:
-                        actions.insert(0, act)
-    except Exception:
-        pass
+            if ai_result:
+                model_used = "gemma4:e2b"
+                if ai_result.get("claim"):
+                    claim = ai_result["claim"]
+                if ai_result.get("reasoning"):
+                    ai_analysis = ai_result["reasoning"]
+                    summary = ai_result["reasoning"]
+                if ai_result.get("observations") and isinstance(ai_result["observations"], list):
+                    for obs in ai_result["observations"]:
+                        if obs not in observations:
+                            observations.append(obs)
+                if ai_result.get("actions") and isinstance(ai_result["actions"], list):
+                    for act in ai_result["actions"]:
+                        if act not in actions:
+                            actions.insert(0, act)
+        except Exception:
+            pass
+
 
     if len(signals) == 0:
         risk_score = 10

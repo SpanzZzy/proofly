@@ -2,10 +2,13 @@
 
 import re
 from typing import List, Tuple
+from app.config import AI_PROVIDER
 from app.schemas import AnalysisResponse, SignalItem, MessageAnalysisRequest
 from app.utils.helpers import get_iso_timestamp, calculate_risk_level, extract_urls_from_text
 from app.ai.ollama_client import ollama_client
 from app.ai.prompts import MESSAGE_ANALYSIS_PROMPT
+from app.detectors.rule_engine import run_comprehensive_rule_engine, run_deterministic_message_rules
+
 
 # Rule Patterns with weights
 URGENCY_PATTERNS = [
@@ -118,56 +121,53 @@ async def analyze_message(req: MessageAnalysisRequest) -> AnalysisResponse:
     text = req.text.strip()
     channel = req.channel or "other"
 
-    # 1. Deterministic Rule Analysis
-    risk_score, signals, observations, actions, unknowns = run_deterministic_message_rules(text)
-
-    # 2. Derive base claim
-    claim = "The sender claims legitimate authorization or offers an urgent notification requiring immediate recipient action."
-    summary = f"Detected {len(signals)} suspicious indicator(s) in this message."
+    # 1. Comprehensive Rule-Based Heuristic Analysis
+    risk_score, signals, observations, actions, unknowns, claim, summary = run_comprehensive_rule_engine(
+        text, channel=channel
+    )
     ai_analysis = None
     model_used = "deterministic-rule-engine"
 
-    # 3. Enhance with Gemma 4 if available
-    try:
-        formatted_prompt = MESSAGE_ANALYSIS_PROMPT.format(channel=channel, text=text)
-        ai_result = await ollama_client.generate_json(formatted_prompt)
+    # 2. Enhance with Gemma 4 if active in AI_PROVIDER mode
+    if AI_PROVIDER == "ollama":
+        try:
+            formatted_prompt = MESSAGE_ANALYSIS_PROMPT.format(channel=channel, text=text)
+            ai_result = await ollama_client.generate_json(formatted_prompt)
 
-        if ai_result:
-            model_used = "gemma4:e2b"
-            if ai_result.get("claim"):
-                claim = ai_result["claim"]
-            if ai_result.get("reasoning"):
-                ai_analysis = ai_result["reasoning"]
-                summary = ai_result["reasoning"]
-            if ai_result.get("observations") and isinstance(ai_result["observations"], list):
-                # Merge unique observations
-                for obs in ai_result["observations"]:
-                    if obs not in observations:
-                        observations.append(obs)
-            if ai_result.get("unknowns") and isinstance(ai_result["unknowns"], list):
-                for unk in ai_result["unknowns"]:
-                    if unk not in unknowns:
-                        unknowns.append(unk)
-            if ai_result.get("actions") and isinstance(ai_result["actions"], list):
-                for act in ai_result["actions"]:
-                    if act not in actions:
-                        actions.insert(0, act)
-            # Add any extra warning signs from AI if unique
-            if ai_result.get("warning_signs") and isinstance(ai_result["warning_signs"], list):
-                for ws in ai_result["warning_signs"]:
-                    if isinstance(ws, dict) and ws.get("name"):
-                        if not any(s.name.lower() == ws["name"].lower() for s in signals):
-                            signals.append(SignalItem(
-                                name=ws["name"],
-                                severity=ws.get("severity", "medium"),
-                                description=ws.get("description", "Identified by Gemma 4 forensic analysis."),
-                                evidence=ws.get("evidence")
-                            ))
-                            # AI finding adds to risk score if not maxed
-                            risk_score = min(risk_score + 10, 100)
-    except Exception as e:
-        # Fallback cleanly to rules without crashing
-        pass
+            if ai_result:
+                model_used = "gemma4:e2b"
+                if ai_result.get("claim"):
+                    claim = ai_result["claim"]
+                if ai_result.get("reasoning"):
+                    ai_analysis = ai_result["reasoning"]
+                    summary = ai_result["reasoning"]
+                if ai_result.get("observations") and isinstance(ai_result["observations"], list):
+                    for obs in ai_result["observations"]:
+                        if obs not in observations:
+                            observations.append(obs)
+                if ai_result.get("unknowns") and isinstance(ai_result["unknowns"], list):
+                    for unk in ai_result["unknowns"]:
+                        if unk not in unknowns:
+                            unknowns.append(unk)
+                if ai_result.get("actions") and isinstance(ai_result["actions"], list):
+                    for act in ai_result["actions"]:
+                        if act not in actions:
+                            actions.insert(0, act)
+                if ai_result.get("warning_signs") and isinstance(ai_result["warning_signs"], list):
+                    for ws in ai_result["warning_signs"]:
+                        if isinstance(ws, dict) and ws.get("name"):
+                            if not any(s.name.lower() == ws["name"].lower() for s in signals):
+                                signals.append(SignalItem(
+                                    name=ws["name"],
+                                    severity=ws.get("severity", "medium"),
+                                    description=ws.get("description", "Identified by Gemma 4 forensic analysis."),
+                                    evidence=ws.get("evidence")
+                                ))
+                                risk_score = min(risk_score + 10, 100)
+        except Exception:
+            # Fallback cleanly to rules without crashing
+            pass
+
 
     # Ensure risk score matches signals if rules found critical flags
     if any(s.severity == "critical" for s in signals):
