@@ -6,7 +6,14 @@
 Proofly is an open-source, privacy-first digital forensics and evidence verification platform built for **Hacktoberfest Hack Day Pune (October 26, 2026)**. It helps citizens and organizations examine suspicious messages, deceptive websites, fraudulent emails, scam calls, and questionable payment proofs before they act.
 
 Proofly pairs deterministic cybersecurity rules with local **Gemma 4** semantic and multimodal vision intelligence running privately via **Ollama**, ensuring **100% offline data sovereignty** with zero reliance on cloud APIs or paid services.
+
+### 🌐 Live Showcase Deployments
+- **Web App**: [https://proofly-brown.vercel.app](https://proofly-brown.vercel.app) (Vercel)
+- **Forensics API**: [https://proofly-api-rhvd.onrender.com](https://proofly-api-rhvd.onrender.com) (Render)
+- **API Health**: [https://proofly-api-rhvd.onrender.com/api/health](https://proofly-api-rhvd.onrender.com/api/health)
+
 ---
+
 ## 🌟 Key Highlights
 
 - **Stellar-Inspired Minimalist SaaS UI**: Clean editorial aesthetic, Inter typography, subtle card borders, dual light/dark theme system, and custom CSS animations.
@@ -72,6 +79,19 @@ npm run dev
 ```
 
 Open **http://localhost:3000** in your browser.
+
+### 4. Temporary Live Showcase Gateway (Connecting Deployed Backend to Local Gemma 4)
+To connect the deployed Render backend to your local Ollama Gemma 4 model during demonstrations:
+```bash
+# 1. Start the authenticated local AI gateway
+bash scripts/start_gateway.sh
+
+# 2. In another terminal, expose via Cloudflare Quick Tunnel
+cloudflared tunnel --url http://127.0.0.1:8765
+
+# 3. Update OLLAMA_BASE_URL in Render Dashboard with the generated trycloudflare.com URL
+```
+*If the Mac goes to sleep or disconnects, the deployed backend automatically and safely falls back to the deterministic rule engine with zero downtime.*
 
 ---
 
