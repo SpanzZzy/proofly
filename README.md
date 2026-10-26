@@ -36,7 +36,7 @@ Proofly pairs deterministic cybersecurity rules with local **Gemma 4** semantic 
 ```
 Frontend: Next.js 16 (App Router), React 19, TypeScript (Strict), Tailwind CSS v4, Lucide Icons
 Backend:  Python 3.9+, FastAPI, Uvicorn, Pydantic v2, Pillow, Phonenumbers, Pytest
-AI Model: Gemma 4 (gemma4:e2b) running locally via Ollama (MLX runner on Apple Silicon)
+Modes:    Deterministic Rules Engine (AI_PROVIDER=rules) & Local Gemma 4 AI (AI_PROVIDER=ollama via Ollama)
 ```
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed structural diagrams and component workflows.
