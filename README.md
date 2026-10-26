@@ -6,9 +6,7 @@
 Proofly is an open-source, privacy-first digital forensics and evidence verification platform built for **Hacktoberfest Hack Day Pune (October 26, 2026)**. It helps citizens and organizations examine suspicious messages, deceptive websites, fraudulent emails, scam calls, and questionable payment proofs before they act.
 
 Proofly pairs deterministic cybersecurity rules with local **Gemma 4** semantic and multimodal vision intelligence running privately via **Ollama**, ensuring **100% offline data sovereignty** with zero reliance on cloud APIs or paid services.
-
 ---
-
 ## 🌟 Key Highlights
 
 - **Stellar-Inspired Minimalist SaaS UI**: Clean editorial aesthetic, Inter typography, subtle card borders, dual light/dark theme system, and custom CSS animations.
