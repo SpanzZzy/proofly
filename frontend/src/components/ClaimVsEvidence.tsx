@@ -74,7 +74,39 @@ export default function ClaimVsEvidence({ response, onReset }: ClaimVsEvidencePr
     };
   };
 
+  const getAnalysisBadge = () => {
+    const isDemo = response.model_used === "demo-predefined" || response.metadata?.is_demo === true;
+    const isAI = response.model_used?.toLowerCase().includes("gemma") || response.model_used?.toLowerCase().includes("ollama");
+
+    if (isDemo) {
+      return {
+        label: "Demo Result",
+        sublabel: "Predefined Example",
+        bg: "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/60",
+        dot: "bg-blue-500",
+        tooltip: "Demo Result — Showcase example with verified forensic profile",
+      };
+    } else if (isAI) {
+      return {
+        label: "AI Analysis",
+        sublabel: "Gemma 4",
+        bg: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/60",
+        dot: "bg-emerald-500 animate-pulse",
+        tooltip: "AI Analysis — Evaluated via local Ollama Gemma 4 neural reasoner",
+      };
+    } else {
+      return {
+        label: "Rule-Based Analysis",
+        sublabel: "Heuristic Engine",
+        bg: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-900/60",
+        dot: "bg-purple-500",
+        tooltip: "Rule-Based Analysis — Live keyword, regex & heuristic scan (no external AI)",
+      };
+    }
+  };
+
   const badge = getRiskBadge(response.risk_score, response.risk_level);
+  const analysisBadge = getAnalysisBadge();
 
   const handleCopy = () => {
     const textToCopy = `PROOFLY FORENSIC REPORT: ${response.title}
@@ -149,7 +181,17 @@ Disclaimer: ${response.disclaimer}`;
       {/* Top Banner / Headline */}
       <div className="p-6 md:p-8 border-b border-zinc-100 dark:border-[#353742] bg-zinc-50/50 dark:bg-[#191B21]/50">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-          <div className="flex items-center space-x-3 relative">
+          <div className="flex flex-wrap items-center gap-2.5 relative">
+            {/* Analysis Mode Badge: Demo Result vs Rule-Based vs AI Analysis */}
+            <div
+              className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${analysisBadge.bg}`}
+              title={analysisBadge.tooltip}
+            >
+              <span className={`w-2 h-2 rounded-full ${analysisBadge.dot}`} />
+              <span>{analysisBadge.label}</span>
+              <span className="opacity-60 text-[10px] hidden sm:inline">({analysisBadge.sublabel})</span>
+            </div>
+
             {/* Risk Badge with Popover Trigger */}
             <button
               onClick={() => setRiskPopoverOpen(!riskPopoverOpen)}
@@ -193,10 +235,10 @@ Disclaimer: ${response.disclaimer}`;
             <button
               onClick={() => setMethodologyModalOpen(true)}
               className="text-xs text-zinc-500 dark:text-[#A9ACB8] hover:text-black dark:hover:text-[#F5F5F7] font-medium hidden sm:inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-zinc-100/80 dark:bg-[#22242C] border border-zinc-200/80 dark:border-[#353742] transition-colors"
-              title="Click to view local model inspection architecture"
+              title="Click to view inspection architecture"
             >
               <Cpu className="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
-              <span>{response.model_used}</span>
+              <span>Methodology</span>
             </button>
           </div>
 
@@ -511,10 +553,11 @@ Disclaimer: ${response.disclaimer}`;
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl bg-zinc-50 dark:bg-[#22242C] border border-zinc-200 dark:border-[#353742] text-[11px] font-mono">
-                <div>Model: {response.model_used}</div>
+              <div className="p-3 rounded-xl bg-zinc-50 dark:bg-[#22242C] border border-zinc-200 dark:border-[#353742] text-[11px] font-mono space-y-1">
+                <div>Analysis Type: {analysisBadge.label} ({analysisBadge.sublabel})</div>
+                <div>Model / Engine: {response.model_used}</div>
                 <div>Risk Score: {response.risk_score} / 100 ({response.risk_level.toUpperCase()})</div>
-                <div>Inference Engine: Ollama Local MLX / Metal</div>
+                <div>Inference Mode: {response.model_used.includes("gemma") ? "Ollama Local MLX / Metal" : "Deterministic Rule Engine (No External Cloud AI)"}</div>
               </div>
             </div>
 

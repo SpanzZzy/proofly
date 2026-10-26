@@ -39,6 +39,20 @@ export default function Navbar({ onOpenHistory, historyCount }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 dark:bg-[#101115]/80 backdrop-blur-md border-b border-zinc-100 dark:border-[#353742] transition-colors">
+      {/* Interactive Demo Production Banner */}
+      <div className="bg-zinc-900 dark:bg-[#16171D] text-zinc-300 dark:text-zinc-400 border-b border-zinc-800 dark:border-[#272932] text-[11px] sm:text-xs py-1.5 px-4 text-center font-normal tracking-tight">
+        <span>Interactive Demo — Rule-based detection and sample investigations. </span>
+        <button
+          onClick={() => {
+            const el = document.getElementById("run-locally");
+            if (el) el.scrollIntoView({ behavior: "smooth" });
+          }}
+          className="text-white dark:text-[#F5F5F7] font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity ml-1 cursor-pointer"
+        >
+          Run locally for full AI analysis &rarr;
+        </button>
+      </div>
+
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Left Brand */}
         <div
@@ -88,6 +102,12 @@ export default function Navbar({ onOpenHistory, historyCount }: NavbarProps) {
           >
             Open Source
           </button>
+          <button
+            onClick={() => scrollTo("run-locally")}
+            className="hover:text-black dark:hover:text-[#F5F5F7] transition-colors"
+          >
+            Run Locally
+          </button>
         </nav>
 
         {/* Right Actions */}
@@ -101,11 +121,11 @@ export default function Navbar({ onOpenHistory, historyCount }: NavbarProps) {
           <div className="hidden lg:flex items-center space-x-1.5 px-3 py-1 rounded-full bg-zinc-50 dark:bg-[#191B21] border border-zinc-200 dark:border-[#353742] text-xs">
             <span
               className={`w-2 h-2 rounded-full ${
-                health?.ollama_connected ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
+                health?.ollama_connected ? "bg-emerald-500 animate-pulse" : "bg-purple-500"
               }`}
             />
             <span className="font-medium text-zinc-700 dark:text-[#A9ACB8]">
-              {health?.ollama_connected ? "Gemma 4 Active" : "Rule Engine (Ollama Offline)"}
+              {health?.ollama_connected ? "Gemma 4 Active" : "Rule Engine Active"}
             </span>
           </div>
 
@@ -124,7 +144,7 @@ export default function Navbar({ onOpenHistory, historyCount }: NavbarProps) {
 
           {/* GitHub Link */}
           <a
-            href="https://github.com"
+            href="https://github.com/SpanzZzy/proofly"
             target="_blank"
             rel="noreferrer"
             className="hidden sm:flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium text-zinc-700 dark:text-[#A9ACB8] hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-[#272932] transition-colors"

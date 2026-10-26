@@ -49,12 +49,15 @@ export default function CallerTool({ onSuccess }: CallerToolProps) {
     }
   };
 
-  const loadExample = (data: any) => {
-    setPhoneNumber(data.phoneNumber || "");
-    setCountryCode(data.countryCode || "IN");
-    setClaimedOrg(data.claimedOrg || "");
-    setCallDescription(data.callDescription || "");
+  const loadExample = (ex: any) => {
+    setPhoneNumber(ex.data.phoneNumber || "");
+    setCountryCode(ex.data.countryCode || "IN");
+    setClaimedOrg(ex.data.claimedOrg || "");
+    setCallDescription(ex.data.callDescription || "");
     setError(null);
+    if (ex.predefinedResult) {
+      onSuccess(ex.predefinedResult, `${ex.data.phoneNumber} ${ex.data.claimedOrg ? `(${ex.data.claimedOrg})` : ""}`);
+    }
   };
 
   return (
@@ -81,11 +84,11 @@ export default function CallerTool({ onSuccess }: CallerToolProps) {
           <span>Try 1-Click Example Scenarios:</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          {EXAMPLES.phone.map((ex, i) => (
+          {EXAMPLES.phone.map((ex) => (
             <button
-              key={i}
+              key={ex.id}
               type="button"
-              onClick={() => loadExample(ex.data)}
+              onClick={() => loadExample(ex)}
               className="text-xs px-3 py-1.5 rounded-full bg-zinc-50 dark:bg-[#22242C] hover:bg-zinc-100 dark:hover:bg-[#272932] border border-zinc-200 dark:border-[#353742] text-zinc-700 dark:text-[#F5F5F7] transition-all hover:scale-[1.01]"
             >
               <span className="font-medium">{ex.title}</span>

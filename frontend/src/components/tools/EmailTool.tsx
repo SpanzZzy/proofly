@@ -44,15 +44,18 @@ export default function EmailTool({ onSuccess }: EmailToolProps) {
     }
   };
 
-  const loadExample = (data: any) => {
-    setSender(data.sender || "");
-    setSubject(data.subject || "");
-    setText(data.text || "");
-    setRawHeaders(data.headers || "");
-    setShowAdvancedHeaders(Boolean(data.headers));
+  const loadExample = (ex: any) => {
+    setSender(ex.data.sender || "");
+    setSubject(ex.data.subject || "");
+    setText(ex.data.text || "");
+    setRawHeaders(ex.data.headers || "");
+    setShowAdvancedHeaders(Boolean(ex.data.headers));
     setEmlFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
     setError(null);
+    if (ex.predefinedResult) {
+      onSuccess(ex.predefinedResult, `Email: ${ex.data.subject || ex.title}`);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,11 +91,11 @@ export default function EmailTool({ onSuccess }: EmailToolProps) {
           <span>Try 1-Click Example Scenarios:</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          {EXAMPLES.email.map((ex, i) => (
+          {EXAMPLES.email.map((ex) => (
             <button
-              key={i}
+              key={ex.id}
               type="button"
-              onClick={() => loadExample(ex.data)}
+              onClick={() => loadExample(ex)}
               className="text-xs px-3 py-1.5 rounded-full bg-zinc-50 dark:bg-[#22242C] hover:bg-zinc-100 dark:hover:bg-[#272932] border border-zinc-200 dark:border-[#353742] text-zinc-700 dark:text-[#F5F5F7] transition-all hover:scale-[1.01]"
             >
               <span className="font-medium">{ex.title}</span>

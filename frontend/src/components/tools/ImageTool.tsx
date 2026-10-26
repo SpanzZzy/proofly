@@ -121,7 +121,11 @@ export default function ImageTool({ onSuccess }: ImageToolProps) {
     setContextDescription(ex.data.context);
     createSampleAdImage("Apple iPhone 16 Pro Max", "90% OFF TODAY");
     setError(null);
+    if (ex.predefinedResult) {
+      onSuccess(ex.predefinedResult, `Image: ${ex.title}`);
+    }
   };
+
 
   return (
     <div className="bg-white dark:bg-[#191B21] rounded-3xl border border-zinc-200/90 dark:border-[#353742] shadow-sm p-6 sm:p-8 text-left transition-colors">

@@ -32,10 +32,13 @@ export default function MessageTool({ onSuccess }: MessageToolProps) {
     }
   };
 
-  const loadExample = (data: any) => {
-    setText(data.text);
-    setChannel(data.channel || "sms");
+  const loadExample = (ex: any) => {
+    setText(ex.data.text);
+    setChannel(ex.data.channel || "sms");
     setError(null);
+    if (ex.predefinedResult) {
+      onSuccess(ex.predefinedResult, ex.data.text.slice(0, 80));
+    }
   };
 
   return (
@@ -77,11 +80,11 @@ export default function MessageTool({ onSuccess }: MessageToolProps) {
           <span>Try 1-Click Example Scenarios:</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          {EXAMPLES.message.map((ex, i) => (
+          {EXAMPLES.message.map((ex) => (
             <button
-              key={i}
+              key={ex.id}
               type="button"
-              onClick={() => loadExample(ex.data)}
+              onClick={() => loadExample(ex)}
               className="text-xs px-3 py-1.5 rounded-full bg-zinc-50 dark:bg-[#22242C] hover:bg-zinc-100 dark:hover:bg-[#272932] border border-zinc-200 dark:border-[#353742] text-zinc-700 dark:text-[#F5F5F7] transition-all hover:scale-[1.01]"
             >
               <span className="font-medium">{ex.title}</span>

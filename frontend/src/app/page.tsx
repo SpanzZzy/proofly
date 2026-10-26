@@ -16,6 +16,7 @@ import HistoryDrawer from "@/components/HistoryDrawer";
 import HowItWorks from "@/components/HowItWorks";
 import PrivacySection from "@/components/PrivacySection";
 import OpenSourceSection from "@/components/OpenSourceSection";
+import RunLocallySection from "@/components/RunLocallySection";
 import Footer from "@/components/Footer";
 import { ToolType, AnalysisResponse, HistoryItem } from "@/lib/types";
 import { useToast } from "@/components/Toast";
@@ -190,6 +191,9 @@ export default function Home() {
 
         {/* Open Source & Gemma 4 Section */}
         <OpenSourceSection />
+
+        {/* Want the full experience? Run locally */}
+        <RunLocallySection />
       </main>
 
       {/* Footer */}

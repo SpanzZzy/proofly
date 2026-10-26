@@ -129,7 +129,11 @@ export default function PaymentTool({ onSuccess }: PaymentToolProps) {
     } else {
       createSamplePaymentImage(ex.data.amount, "Completed", "");
     }
+    if (ex.predefinedResult) {
+      onSuccess(ex.predefinedResult, `Payment Proof: ${ex.data.currency || "INR"} ${ex.data.amount} (${ex.title})`);
+    }
   };
+
 
   return (
     <div className="bg-white dark:bg-[#191B21] rounded-3xl border border-zinc-200/90 dark:border-[#353742] shadow-sm p-6 sm:p-8 text-left transition-colors">
