@@ -42,6 +42,22 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} scroll-smooth antialiased`}>
       <head>
+        {/* Google tag (gtag.js) */}
+        {/* eslint-disable-next-line @next/next/next-script-for-ga */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=GT-NSSZMTLH"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+
+gtag('config', 'GT-NSSZMTLH');`,
+          }}
+        />
+        {/* End Google tag (gtag.js) */}
         {/* Google Tag Manager */}
         {/* eslint-disable-next-line @next/next/next-script-for-ga */}
         <script
@@ -54,21 +70,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           }}
         />
         {/* End Google Tag Manager */}
-        {/* Google Analytics 4 (gtag.js) */}
-        {/* eslint-disable-next-line @next/next/next-script-for-ga */}
-        <script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-PLVKBKF3JM"
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-PLVKBKF3JM');`,
-          }}
-        />
-        {/* End Google Analytics 4 */}
       </head>
       <body className="min-h-screen bg-white dark:bg-[#101115] text-[#111111] dark:text-[#F5F5F7] font-sans selection:bg-zinc-200 dark:selection:bg-zinc-800 transition-colors">
         {/* Google Tag Manager (noscript) */}
